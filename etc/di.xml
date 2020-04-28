@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+
+    <type name="Magento\Framework\Mview\View">
+        <plugin sortOrder="1" name="reachDigitalIndexerPerformanceView"
+                type="ReachDigital\IndexerPerformance\Plugin\ViewPlugin"/>
+    </type>
+    <type name="Magento\Framework\Mview\View\Changelog">
+        <plugin sortOrder="1" name="reachDigitalIndexerPerformanceChangelog"
+                type="ReachDigital\IndexerPerformance\Plugin\ChangelogPlugin"/>
+    </type>
+    <type name="Magento\Catalog\Model\ResourceModel\Product\Indexer\Eav\AbstractEav">
+        <plugin sortOrder="1" name="reachDigitalIndexerPerformanceAbstractEav"
+                type="ReachDigital\IndexerPerformance\Plugin\AbstractEavPlugin"/>
+    </type>
+    <preference for="Magento\Indexer\Console\Command\IndexerReindexCommand"
+                type="ReachDigital\IndexerPerformance\IndexerReindexCommandPreference"></preference>
+</config>
