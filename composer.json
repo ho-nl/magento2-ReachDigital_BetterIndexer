@@ -1,5 +1,5 @@
 {
-    "name": "reachdigital/magento2-betterindexers",
+    "name": "reach-digital/magento2-betterindexers",
     "description": "",
     "require": {
         "php": "~7.0.0|~7.1.0|~7.2.0",
