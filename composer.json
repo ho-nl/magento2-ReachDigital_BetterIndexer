@@ -19,7 +19,7 @@
             "registration.php"
         ],
         "psr-4": {
-            "ReachDigital\\IndexerPerformance\\": ""
+            "ReachDigital\\IndexerPerformance\\": "src/"
         }
     },
     "extra": {
