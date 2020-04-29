@@ -8,4 +8,4 @@ php bin/magento module:enable ReachDigital_BetterIndexers
 
 ## Features
 * Improves preformance of indexers
-* better logging 
+* better logging ('/var/log/indexer.log')
