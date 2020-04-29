@@ -1,4 +1,4 @@
-# Reach Digital Improved indexer preformance
+# Reach Digital Improved indexer performance
 
 ## Installation
 ```BASH
@@ -8,4 +8,4 @@ php bin/magento module:enable ReachDigital_BetterIndexers
 
 ## Features
 * Improves preformance of indexers
-* better logging ('/var/log/indexer.log')
+* better logging ('var/log/indexer.log')
