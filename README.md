@@ -2,7 +2,7 @@
 
 ## Installation
 ```BASH
-composer require reach-digital/betterindexers
+composer require reach-digital/magento2-betterindexers
 php bin/magento module:enable ReachDigital_BetterIndexers
 ```
 
