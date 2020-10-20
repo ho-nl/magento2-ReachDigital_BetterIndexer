@@ -69,9 +69,7 @@ class IndexerReindexCommandPreference extends \Magento\Indexer\Console\Command\I
             try {
                 $this->validateIndexerStatus($indexer);
                 $startTime = microtime(true);
-                $output->writeln(
-                    'Rebuilding ' . $indexer->getTitle() . ' index at '. gmdate('H:i:s', $startTime)
-                );
+                $output->writeln('Rebuilding ' . $indexer->getTitle() . ' index at ' . gmdate('H:i:s', $startTime));
                 $indexerConfig = $this->getConfig()->getIndexer($indexer->getId());
                 $sharedIndex = $indexerConfig['shared_index'];
 
@@ -84,7 +82,10 @@ class IndexerReindexCommandPreference extends \Magento\Indexer\Console\Command\I
                 }
                 $resultTime = microtime(true) - $startTime;
                 $output->writeln(
-                    ' > ' . $indexer->getTitle() . ' index has been rebuilt successfully in ' . gmdate('H:i:s', $resultTime)
+                    ' > ' .
+                        $indexer->getTitle() .
+                        ' index has been rebuilt successfully in ' .
+                        gmdate('H:i:s', $resultTime)
                 );
                 $returnValue = Cli::RETURN_SUCCESS;
             } catch (LocalizedException $e) {
@@ -104,7 +105,7 @@ class IndexerReindexCommandPreference extends \Magento\Indexer\Console\Command\I
      */
     protected function getIndexers(InputInterface $input)
     {
-        $indexers =  parent::getIndexers($input);
+        $indexers = parent::getIndexers($input);
         $allIndexers = $this->getAllIndexers();
         if (!array_diff_key($allIndexers, $indexers)) {
             return $indexers;
@@ -113,14 +114,8 @@ class IndexerReindexCommandPreference extends \Magento\Indexer\Console\Command\I
         $relatedIndexers = [];
         $dependentIndexers = [];
         foreach ($indexers as $indexer) {
-            $relatedIndexers = array_merge(
-                $relatedIndexers,
-                $this->getRelatedIndexerIds($indexer->getId())
-            );
-            $dependentIndexers = array_merge(
-                $dependentIndexers,
-                $this->getDependentIndexerIds($indexer->getId())
-            );
+            $relatedIndexers = array_merge($relatedIndexers, $this->getRelatedIndexerIds($indexer->getId()));
+            $dependentIndexers = array_merge($dependentIndexers, $this->getDependentIndexerIds($indexer->getId()));
         }
 
         $invalidRelatedIndexers = [];
@@ -132,15 +127,7 @@ class IndexerReindexCommandPreference extends \Magento\Indexer\Console\Command\I
 
         return array_intersect_key(
             $allIndexers,
-            array_flip(
-                array_unique(
-                    array_merge(
-                        array_keys($indexers),
-                        $invalidRelatedIndexers,
-                        $dependentIndexers
-                    )
-                )
-            )
+            array_flip(array_unique(array_merge(array_keys($indexers), $invalidRelatedIndexers, $dependentIndexers)))
         );
     }
 
@@ -176,11 +163,7 @@ class IndexerReindexCommandPreference extends \Magento\Indexer\Console\Command\I
         foreach (array_keys($this->getConfig()->getIndexers()) as $id) {
             $dependencies = $this->getDependencyInfoProvider()->getIndexerIdsToRunBefore($id);
             if (array_search($indexerId, $dependencies) !== false) {
-                $dependentIndexerIds = array_merge(
-                    $dependentIndexerIds,
-                    [$id],
-                    $this->getDependentIndexerIds($id)
-                );
+                $dependentIndexerIds = array_merge($dependentIndexerIds, [$id], $this->getDependentIndexerIds($id));
             }
         }
 
@@ -198,10 +181,7 @@ class IndexerReindexCommandPreference extends \Magento\Indexer\Console\Command\I
     {
         if ($indexer->getStatus() == StateInterface::STATUS_WORKING) {
             throw new LocalizedException(
-                __(
-                    '%1 index is locked by another reindex process. Skipping.',
-                    $indexer->getTitle()
-                )
+                __('%1 index is locked by another reindex process. Skipping.', $indexer->getTitle())
             );
         }
     }
@@ -293,5 +273,4 @@ class IndexerReindexCommandPreference extends \Magento\Indexer\Console\Command\I
         }
         return $this->dependencyInfoProvider;
     }
-
 }

@@ -8,7 +8,6 @@ use Magento\Framework\Mview\View;
 
 class ViewPlugin
 {
-
     /**
      * Default batch size for partial reindex
      */
@@ -41,13 +40,13 @@ class ViewPlugin
      * @param array $data
      * @param array $changelogBatchSize
      */
-    public function __construct(
-        ActionFactory $actionFactory,
-        array $changelogBatchSize = []
-    ) {
+    public function __construct(ActionFactory $actionFactory, array $changelogBatchSize = [])
+    {
         $this->actionFactory = $actionFactory;
         $this->changelogBatchSize = $changelogBatchSize;
-        $this->indexerLog = (new \Zend\Log\Logger())->addWriter(new \Zend\Log\Writer\Stream(BP . '/var/log/indexer.log'));
+        $this->indexerLog = (new \Zend\Log\Logger())->addWriter(
+            new \Zend\Log\Writer\Stream(BP . '/var/log/indexer.log')
+        );
     }
 
     /**
@@ -73,24 +72,36 @@ class ViewPlugin
             return;
         }
 
-        $lastVersionId = (int)$subject->getState()->getVersionId();
+        $lastVersionId = (int) $subject->getState()->getVersionId();
         $action = $this->actionFactory->get($subject->getActionClass());
 
-        $this->indexerLog->info(sprintf(
-            'Starting indexer for %s. Processing versions between %s and %s.',
-            $subject->getId(), $lastVersionId, $currentVersionId
-        ));
+        $this->indexerLog->info(
+            sprintf(
+                'Starting indexer for %s. Processing versions between %s and %s.',
+                $subject->getId(),
+                $lastVersionId,
+                $currentVersionId
+            )
+        );
         try {
-            $subject->getState()->setStatus(View\StateInterface::STATUS_WORKING)->save();
+            $subject
+                ->getState()
+                ->setStatus(View\StateInterface::STATUS_WORKING)
+                ->save();
 
             $this->aroundExecuteAction($subject, $proceed, $action, $lastVersionId, $currentVersionId);
 
             $this->indexerLog->info(sprintf('Succesfully ran indexer %s.', $subject->getId()));
             $subject->getState()->loadByView($subject->getId());
-            $statusToRestore = $subject->getState()->getStatus() === View\StateInterface::STATUS_SUSPENDED
-                ? View\StateInterface::STATUS_SUSPENDED
-                : View\StateInterface::STATUS_IDLE;
-            $subject->getState()->setVersionId($currentVersionId)->setStatus($statusToRestore)->save();
+            $statusToRestore =
+                $subject->getState()->getStatus() === View\StateInterface::STATUS_SUSPENDED
+                    ? View\StateInterface::STATUS_SUSPENDED
+                    : View\StateInterface::STATUS_IDLE;
+            $subject
+                ->getState()
+                ->setVersionId($currentVersionId)
+                ->setStatus($statusToRestore)
+                ->save();
         } finally {
             $this->stop($subject)();
         }
@@ -105,8 +116,13 @@ class ViewPlugin
      * @return void
      * @throws \Exception
      */
-    private function aroundExecuteAction(\Magento\Framework\Mview\View $subject, callable $proceed, ActionInterface $action, int $lastVersionId, int $currentVersionId)
-    {
+    private function aroundExecuteAction(
+        \Magento\Framework\Mview\View $subject,
+        callable $proceed,
+        ActionInterface $action,
+        int $lastVersionId,
+        int $currentVersionId
+    ) {
         /* Get the memory limit in bytes. */
         $memoryLimit = $this->getMemoryLimit();
 
@@ -123,13 +139,15 @@ class ViewPlugin
             $versionTo = min($currentVersionId, $vsFrom + $versionBatchSize);
             $ids = $subject->getChangelog()->getList($vsFrom, $versionTo);
 
-            $this->indexerLog->info(sprintf(
-                'Starting batch for indexer %s. Batch contains versions between %s and %s. Found %s items to update.',
-                $subject->getId(),
-                $vsFrom,
-                ($vsFrom + $versionBatchSize),
-                count($ids)
-            ));
+            $this->indexerLog->info(
+                sprintf(
+                    'Starting batch for indexer %s. Batch contains versions between %s and %s. Found %s items to update.',
+                    $subject->getId(),
+                    $vsFrom,
+                    $vsFrom + $versionBatchSize,
+                    count($ids)
+                )
+            );
             // We run the actual indexer in batches.
             // Chunked AFTER loading to avoid duplicates in separate chunks.
             $chunks = array_chunk($ids, $batchSize);
@@ -137,8 +155,8 @@ class ViewPlugin
                 $action->execute($ids);
                 /* Memory check. */
                 if ($memoryLimit > 0) {
-                    $memoryUsage     = memory_get_usage(true);
-                    $percentageUsage = $memoryUsage * 100 / $memoryLimit;
+                    $memoryUsage = memory_get_usage(true);
+                    $percentageUsage = ($memoryUsage * 100) / $memoryLimit;
                     if ($percentageUsage >= $memoryPercentageLimit) {
                         throw new \RuntimeException('Memory usage too high while running index.');
                     }
@@ -156,32 +174,36 @@ class ViewPlugin
     private function getMemoryLimit()
     {
         $limitString = ini_get('memory_limit');
-        $unit        = strtolower(mb_substr($limitString, -1));
-        $bytes       = intval(mb_substr($limitString, 0, -1), 10);
+        $unit = strtolower(mb_substr($limitString, -1));
+        $bytes = intval(mb_substr($limitString, 0, -1), 10);
         switch ($unit) {
             case 'k':
                 $bytes *= 1024;
-                break 1;
+                break;
             case 'm':
                 $bytes *= 1048576;
-                break 1;
+                break;
             case 'g':
                 $bytes *= 1073741824;
-                break 1;
+                break;
             default:
-                break 1;
+                break;
         }
         return $bytes;
     }
 
     private function stop(\Magento\Framework\Mview\View $subject)
     {
-            return function ()use ($subject) {
-                $subject->getState()->loadByView($subject->getId());
-                    $statusToRestore = $subject->getState()->getStatus() == View\StateInterface::STATUS_SUSPENDED
-                        ? View\StateInterface::STATUS_SUSPENDED
-                            : View\StateInterface::STATUS_IDLE;
-                $subject->getState()->setStatus($statusToRestore)->save();
-            };
+        return function () use ($subject) {
+            $subject->getState()->loadByView($subject->getId());
+            $statusToRestore =
+                $subject->getState()->getStatus() == View\StateInterface::STATUS_SUSPENDED
+                    ? View\StateInterface::STATUS_SUSPENDED
+                    : View\StateInterface::STATUS_IDLE;
+            $subject
+                ->getState()
+                ->setStatus($statusToRestore)
+                ->save();
+        };
     }
 }

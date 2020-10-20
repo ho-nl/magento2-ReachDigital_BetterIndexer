@@ -4,7 +4,6 @@ namespace ReachDigital\IndexerPerformance\Plugin;
 
 class AbstractEavPlugin
 {
-
     /**
      * @var \Magento\Framework\Indexer\Table\StrategyInterface
      */
@@ -15,8 +14,10 @@ class AbstractEavPlugin
         $this->tableStrategy = $tableStrategy;
     }
 
-    public function beforeReindexEntities(\Magento\Catalog\Model\ResourceModel\Product\Indexer\Eav\AbstractEav $subject, $processIds)
-    {
+    public function beforeReindexEntities(
+        \Magento\Catalog\Model\ResourceModel\Product\Indexer\Eav\AbstractEav $subject,
+        $processIds
+    ) {
         $this->tableStrategy->setUseIdxTable(true);
         return [$processIds];
     }

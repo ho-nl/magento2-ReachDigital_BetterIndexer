@@ -25,25 +25,23 @@ class ChangelogPlugin
         $this->checkConnection();
     }
 
-    public function aroundGetList(\Magento\Framework\Mview\View\Changelog $subject, callable $proceed, $fromVersionId, $toVersionId)
-    {
+    public function aroundGetList(
+        \Magento\Framework\Mview\View\Changelog $subject,
+        callable $proceed,
+        $fromVersionId,
+        $toVersionId
+    ) {
         $changelogTableName = $this->resource->getTableName($subject->getName());
         if (!$this->connection->isTableExists($changelogTableName)) {
-            throw new ChangelogTableNotExistsException(new Phrase("Table %1 does not exist", [$changelogTableName]));
+            throw new ChangelogTableNotExistsException(new Phrase('Table %1 does not exist', [$changelogTableName]));
         }
 
-        $select = $this->connection->select()
-            ->from(
-                $changelogTableName,
-                [$subject->getColumnName()]
-            )->group($subject->getColumnName())
-            ->having(
-                'MAX(version_id) > ?',
-                (int)$fromVersionId
-            )->having(
-                'MAX(version_id) <= ?',
-                (int)$toVersionId
-            );
+        $select = $this->connection
+            ->select()
+            ->from($changelogTableName, [$subject->getColumnName()])
+            ->group($subject->getColumnName())
+            ->having('MAX(version_id) > ?', (int) $fromVersionId)
+            ->having('MAX(version_id) <= ?', (int) $toVersionId);
 
         return array_map('intval', $this->connection->fetchCol($select));
     }
