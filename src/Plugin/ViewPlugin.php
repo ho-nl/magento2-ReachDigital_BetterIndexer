@@ -2,9 +2,11 @@
 
 namespace ReachDigital\IndexerPerformance\Plugin;
 
+use Exception;
 use Magento\Framework\Mview\ActionFactory;
 use Magento\Framework\Mview\ActionInterface;
 use Magento\Framework\Mview\View;
+use Magento\Framework\Mview\View\ChangelogTableNotExistsException;
 
 class ViewPlugin
 {
