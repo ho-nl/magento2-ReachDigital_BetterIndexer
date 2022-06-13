@@ -47,9 +47,8 @@ class ViewPlugin
         $this->actionFactory = $actionFactory;
         $this->changelogBatchSize = $changelogBatchSize;
         (new \Magento\Framework\Filesystem\Io\File())->mkdir(BP . '/var/log');
-        $this->indexerLog = (new \Zend\Log\Logger())->addWriter(
-            new \Zend\Log\Writer\Stream(BP . '/var/log/indexer.log')
-        );
+        $this->indexerLog = (new \Zend_Log())->addWriter(new \Zend_Log_Writer_Stream(BP . '/var/log/indexer.log'));
+
     }
 
     /**
