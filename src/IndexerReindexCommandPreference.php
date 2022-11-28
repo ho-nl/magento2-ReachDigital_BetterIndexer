@@ -68,7 +68,7 @@ class IndexerReindexCommandPreference extends \Magento\Indexer\Console\Command\I
         foreach ($this->getIndexers($input) as $indexer) {
             try {
                 $this->validateIndexerStatus($indexer);
-                $startTime = microtime(true);
+                $startTime = intval(microtime(true));
                 $output->writeln('Rebuilding ' . $indexer->getTitle() . ' index at ' . gmdate('H:i:s', $startTime));
                 $indexerConfig = $this->getConfig()->getIndexer($indexer->getId());
                 $sharedIndex = $indexerConfig['shared_index'];
@@ -80,7 +80,7 @@ class IndexerReindexCommandPreference extends \Magento\Indexer\Console\Command\I
                         $this->validateSharedIndex($sharedIndex);
                     }
                 }
-                $resultTime = microtime(true) - $startTime;
+                $resultTime = intval(microtime(true) - $startTime);
                 $output->writeln(
                     ' > ' .
                         $indexer->getTitle() .
