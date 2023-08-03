@@ -43,7 +43,7 @@ class IndexerReindexCommandPreference extends \Magento\Indexer\Console\Command\I
     public function __construct(
         ObjectManagerFactory $objectManagerFactory,
         IndexerRegistry $indexerRegistry = null,
-        DependencyInfoProvider $dependencyInfoProvider = null
+        DependencyInfoProvider $dependencyInfoProvider = null,
     ) {
         $this->indexerRegistry = $indexerRegistry;
         $this->dependencyInfoProvider = $dependencyInfoProvider;
@@ -68,8 +68,8 @@ class IndexerReindexCommandPreference extends \Magento\Indexer\Console\Command\I
         foreach ($this->getIndexers($input) as $indexer) {
             try {
                 $this->validateIndexerStatus($indexer);
-                $startTime = intval(microtime(true));
-                $output->writeln('Rebuilding ' . $indexer->getTitle() . ' index at ' . gmdate('H:i:s', $startTime));
+                $startTime = new \DateTimeImmutable();
+                $output->writeln(__('Rebuilding %1 index at %2', $indexer->getTitle(), $startTime->format('H:i:s')));
                 $indexerConfig = $this->getConfig()->getIndexer($indexer->getId());
                 $sharedIndex = $indexerConfig['shared_index'];
 
@@ -80,12 +80,20 @@ class IndexerReindexCommandPreference extends \Magento\Indexer\Console\Command\I
                         $this->validateSharedIndex($sharedIndex);
                     }
                 }
-                $resultTime = intval(microtime(true) - $startTime);
+                $endTime = new \DateTimeImmutable();
+                $interval = $startTime->diff($endTime);
+                $days = $interval->format('%d');
+                $hours = $days > 0 ? $days * 24 + $interval->format('%H') : $interval->format('%H');
+                $minutes = $interval->format('%I');
+                $seconds = $interval->format('%S');
                 $output->writeln(
-                    ' > ' .
-                        $indexer->getTitle() .
-                        ' index has been rebuilt successfully in ' .
-                        gmdate('H:i:s', $resultTime)
+                    __(
+                        '> %1 index has been rebuilt successfully in %2:%3:%4',
+                        $indexer->getTitle(),
+                        $hours,
+                        $minutes,
+                        $seconds,
+                    ),
                 );
                 $returnValue = Cli::RETURN_SUCCESS;
             } catch (LocalizedException $e) {
@@ -127,7 +135,7 @@ class IndexerReindexCommandPreference extends \Magento\Indexer\Console\Command\I
 
         return array_intersect_key(
             $allIndexers,
-            array_flip(array_unique(array_merge(array_keys($indexers), $invalidRelatedIndexers, $dependentIndexers)))
+            array_flip(array_unique(array_merge(array_keys($indexers), $invalidRelatedIndexers, $dependentIndexers))),
         );
     }
 
@@ -144,7 +152,7 @@ class IndexerReindexCommandPreference extends \Magento\Indexer\Console\Command\I
             $relatedIndexerIds = array_merge(
                 $relatedIndexerIds,
                 [$relatedIndexerId],
-                $this->getRelatedIndexerIds($relatedIndexerId)
+                $this->getRelatedIndexerIds($relatedIndexerId),
             );
         }
 
@@ -181,7 +189,7 @@ class IndexerReindexCommandPreference extends \Magento\Indexer\Console\Command\I
     {
         if ($indexer->getStatus() == StateInterface::STATUS_WORKING) {
             throw new LocalizedException(
-                __('%1 index is locked by another reindex process. Skipping.', $indexer->getTitle())
+                __('%1 index is locked by another reindex process. Skipping.', $indexer->getTitle()),
             );
         }
     }
@@ -214,7 +222,7 @@ class IndexerReindexCommandPreference extends \Magento\Indexer\Console\Command\I
     {
         if (empty($sharedIndex)) {
             throw new \InvalidArgumentException(
-                'The sharedIndex is an invalid shared index identifier. Verify the identifier and try again.'
+                'The sharedIndex is an invalid shared index identifier. Verify the identifier and try again.',
             );
         }
         $indexerIds = $this->getIndexerIdsBySharedIndex($sharedIndex);
