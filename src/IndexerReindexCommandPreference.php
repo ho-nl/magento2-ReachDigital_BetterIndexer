@@ -62,7 +62,7 @@ class IndexerReindexCommandPreference extends \Magento\Indexer\Console\Command\I
         parent::configure();
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $returnValue = Cli::RETURN_FAILURE;
         foreach ($this->getIndexers($input) as $indexer) {
