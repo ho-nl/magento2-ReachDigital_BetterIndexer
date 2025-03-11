@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="reach_digital_config" translate="label" sortOrder="15">
+            <label>Reach Digital</label>
+        </tab>
+        <section id="reachdigital_indexers" translate="label" sortOrder="100" showInDefault="1">
+            <label>Better Indexers</label>
+            <tab>reach_digital_config</tab>
+            <resource>Magento_Config::config_general</resource>
+            <group id="logging" translate="label" sortOrder="10" showInDefault="1">
+                <label>Logging configuration</label>
+                <field id="stacktrace_logging" translate="label" type="select" sortOrder="10" showInDefault="1">
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <label>Log stacktraces of indexer start events</label>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>
