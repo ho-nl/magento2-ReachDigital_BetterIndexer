@@ -15,4 +15,8 @@
     </type>
     <preference for="Magento\Indexer\Console\Command\IndexerReindexCommand"
                 type="ReachDigital\IndexerPerformance\IndexerReindexCommandPreference"></preference>
+    <type name="Magento\Indexer\Model\Indexer">
+        <plugin name="reachDigitalIndexerFullReindexLogging"
+                type="ReachDigital\IndexerPerformance\Plugin\FullReindexLogging"/>
+    </type>
 </config>

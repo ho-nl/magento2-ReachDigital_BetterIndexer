@@ -3,6 +3,7 @@
 namespace ReachDigital\IndexerPerformance\Plugin;
 
 use Exception;
+use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Mview\ActionFactory;
 use Magento\Framework\Mview\ActionInterface;
 use Magento\Framework\Mview\View;
@@ -36,19 +37,25 @@ class ViewPlugin
     private $changelogBatchSize;
 
     private $indexerLog;
+    private $indexerTraceLog;
+    /**
+     * @var ScopeConfigInterface
+     */
+    private $storeConfig;
 
     /**
      * @param ActionFactory $actionFactory
      * @param array $data
      * @param array $changelogBatchSize
      */
-    public function __construct(ActionFactory $actionFactory, array $changelogBatchSize = [])
+    public function __construct(ActionFactory $actionFactory, ScopeConfigInterface $storeConfig, array $changelogBatchSize = [])
     {
         $this->actionFactory = $actionFactory;
         $this->changelogBatchSize = $changelogBatchSize;
         (new \Magento\Framework\Filesystem\Io\File())->mkdir(BP . '/var/log');
         $this->indexerLog = (new \Zend_Log())->addWriter(new \Zend_Log_Writer_Stream(BP . '/var/log/indexer.log'));
-
+        $this->indexerTraceLog = (new \Zend_Log())->addWriter(new \Zend_Log_Writer_Stream(BP . '/var/log/indexer-trace.log'));
+        $this->storeConfig = $storeConfig;
     }
 
     /**
@@ -77,9 +84,15 @@ class ViewPlugin
         $lastVersionId = (int) $subject->getState()->getVersionId();
         $action = $this->actionFactory->get($subject->getActionClass());
 
+        if ($this->storeConfig->isSetFlag('reachdigital_indexers/logging/stacktrace_logging')) {
+            $exception = new \Exception();
+            $this->indexerTraceLog->info(sprintf('Starting partial reindex for %s. pid: %s trace: %s', $subject->getId(), getmypid(), $exception->getTraceAsString()));
+        }
         $this->indexerLog->info(
             sprintf(
-                'Starting indexer for %s. Processing versions between %s and %s.',
+                '[start][%s][%s][partial] Starting partial reindex for %s. Processing versions between %s and %s.',
+                str_pad($subject->getId(), 30, ' ', STR_PAD_LEFT),
+                str_pad(getmypid(), 6, ' ', STR_PAD_LEFT),
                 $subject->getId(),
                 $lastVersionId,
                 $currentVersionId
@@ -93,7 +106,14 @@ class ViewPlugin
 
             $this->aroundExecuteAction($subject, $proceed, $action, $lastVersionId, $currentVersionId);
 
-            $this->indexerLog->info(sprintf('Succesfully ran indexer %s.', $subject->getId()));
+            $this->indexerLog->info(
+                sprintf(
+                    '[stop ][%s][%s][partial] Successfully ran indexer %s.',
+                    str_pad($subject->getId(), 30, ' ', STR_PAD_LEFT),
+                    str_pad(getmypid(), 6, ' ', STR_PAD_LEFT),
+                    $subject->getId()
+                )
+            );
             $subject->getState()->loadByView($subject->getId());
             $statusToRestore =
                 $subject->getState()->getStatus() === View\StateInterface::STATUS_SUSPENDED
@@ -143,7 +163,9 @@ class ViewPlugin
 
             $this->indexerLog->info(
                 sprintf(
-                    'Starting batch for indexer %s. Batch contains versions between %s and %s. Found %s items to update.',
+                    '[batch][%s][%s][partial] Starting batch for indexer %s. Batch contains versions between %s and %s. Found %s items to update.',
+                    str_pad($subject->getId(), 30, ' ', STR_PAD_LEFT),
+                    str_pad(getmypid(), 6, ' ', STR_PAD_LEFT),
                     $subject->getId(),
                     $vsFrom,
                     $vsFrom + $versionBatchSize,
