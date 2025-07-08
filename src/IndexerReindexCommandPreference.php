@@ -42,8 +42,8 @@ class IndexerReindexCommandPreference extends \Magento\Indexer\Console\Command\I
      */
     public function __construct(
         ObjectManagerFactory $objectManagerFactory,
-        IndexerRegistry $indexerRegistry = null,
-        DependencyInfoProvider $dependencyInfoProvider = null,
+        ?IndexerRegistry $indexerRegistry = null,
+        ?DependencyInfoProvider $dependencyInfoProvider = null,
     ) {
         $this->indexerRegistry = $indexerRegistry;
         $this->dependencyInfoProvider = $dependencyInfoProvider;
