@@ -12,7 +12,7 @@ php bin/magento module:enable ReachDigital_BetterIndexers
   * Use temporary index tables
   * Manage memory usage
   * Improve potential for deadlocks
-  * Improve full reindex table swap
+  * Improve MSI full reindex table swap
     * ANALYZE before swap, so new table has proper statistics
     * This avoid a potential query pile up / deadlock due to poorly optimized query plans
     * Lower `lock_wait_timeout` during swap (default was *1 year*)
