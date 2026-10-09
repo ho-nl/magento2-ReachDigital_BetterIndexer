@@ -1,17 +1,20 @@
 # Reach Digital Improved indexer performance
 
 ## Installation
-```BASH
+```bash
 composer require reach-digital/magento2-betterindexers
 php bin/magento module:enable ReachDigital_BetterIndexers
 ```
 
 ## Features
-* Improves preformance of indexers
+* Improves performance of indexers
   * Smarter queries
   * Use temporary index tables
   * Manage memory usage
-* Safer MSI index table switch: `ANALYZE` replica first, short
-  `lock_wait_timeout` (with retries) on the `RENAME`
+  * Improve potential for deadlocks
+  * Improve full reindex table swap
+    * ANALYZE before swap, so new table has proper statistics
+    * This avoid a potential query pile up / deadlock due to poorly optimized query plans
+    * Lower `lock_wait_timeout` during swap (default was *1 year*)
 * Recover indexers after crash
 * better logging ('var/log/indexer.log')
