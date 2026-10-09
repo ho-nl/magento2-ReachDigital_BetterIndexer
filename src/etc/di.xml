@@ -19,4 +19,8 @@
         <plugin name="reachDigitalIndexerFullReindexLogging"
                 type="ReachDigital\IndexerPerformance\Plugin\FullReindexLogging"/>
     </type>
+    <type name="Magento\InventoryMultiDimensionalIndexerApi\Model\IndexTableSwitcherInterface">
+        <plugin name="reachDigitalAnalyzeReplicaAndLimitLockWaitOnIndexTableSwitch"
+                type="ReachDigital\IndexerPerformance\Plugin\AnalyzeReplicaAndLimitLockWaitOnIndexTableSwitch"/>
+    </type>
 </config>
