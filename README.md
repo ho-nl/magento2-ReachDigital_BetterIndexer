@@ -1,4 +1,4 @@
-# Reach Digital Improved indexer performance
+# Reach Digital indexer improvements
 
 ## Installation
 ```bash
