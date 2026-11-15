@@ -70,14 +70,13 @@ class ViewPlugin
             return;
         }
 
-        pcntl_signal(SIGINT, $this->stop($subject));
-        pcntl_signal(SIGQUIT, $this->stop($subject));
-        pcntl_signal(SIGHUP, $this->stop($subject));
+        $restoreSignalHandlers = $this->installSignalHandlers($subject);
         register_shutdown_function($this->stop($subject));
 
         try {
             $currentVersionId = $subject->getChangelog()->getVersion();
         } catch (ChangelogTableNotExistsException $e) {
+            $restoreSignalHandlers();
             return;
         }
 
@@ -125,6 +124,7 @@ class ViewPlugin
                 ->setStatus($statusToRestore)
                 ->save();
         } finally {
+            $restoreSignalHandlers();
             $this->stop($subject)();
         }
     }
@@ -214,6 +214,42 @@ class ViewPlugin
                 break;
         }
         return $bytes;
+    }
+
+    /**
+     * Reset the view state when the process is interrupted. Requires ext-pcntl, without it this is a no-op.
+     *
+     * @return callable Restores the previous signal handlers and async signal setting
+     */
+    private function installSignalHandlers(\Magento\Framework\Mview\View $subject): callable
+    {
+        if (!function_exists('pcntl_signal') || !function_exists('pcntl_async_signals')) {
+            return function () {
+            };
+        }
+
+        $signals = [SIGINT, SIGQUIT, SIGHUP];
+        $previousAsync = pcntl_async_signals();
+        $previousHandlers = [];
+        foreach ($signals as $signal) {
+            $previousHandlers[$signal] = pcntl_signal_get_handler($signal);
+        }
+
+        pcntl_async_signals(true);
+        $stop = $this->stop($subject);
+        foreach ($signals as $signal) {
+            pcntl_signal($signal, function () use ($stop, $signal) {
+                $stop();
+                exit(128 + $signal);
+            });
+        }
+
+        return function () use ($signals, $previousHandlers, $previousAsync) {
+            foreach ($signals as $signal) {
+                pcntl_signal($signal, $previousHandlers[$signal]);
+            }
+            pcntl_async_signals($previousAsync);
+        };
     }
 
     private function stop(\Magento\Framework\Mview\View $subject)
