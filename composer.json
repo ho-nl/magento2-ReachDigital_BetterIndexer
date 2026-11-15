@@ -4,6 +4,9 @@
         "php": "~7.1.3||~7.2.0||~7.3.0||~7.4.0||~8.1.0||~8.2.0||~8.3.0||~8.4.0||~8.5.0",
         "magento/framework": "~102.0|~103.0"
     },
+    "suggest": {
+        "ext-pcntl": "Allows the indexer state to be reset when a running partial reindex is interrupted by SIGINT, SIGQUIT or SIGHUP"
+    },
     "type": "magento2-module",
     "autoload": {
         "files": [
