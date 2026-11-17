@@ -24,5 +24,6 @@
             "dealerdirect/phpcodesniffer-composer-installer": true,
             "phpstan/extension-installer": true
         }
-    }
+    },
+    "description": "Reach Digital indexer improvements for Magento 2"
 }
