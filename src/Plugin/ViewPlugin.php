@@ -274,6 +274,7 @@ class ViewPlugin
         foreach ($signals as $signal) {
             pcntl_signal($signal, function () use ($stop, $signal) {
                 $stop();
+                // phpcs:ignore Magento2.Security.LanguageConstruct.ExitUsage -- the signal ends the process
                 exit(128 + $signal);
             });
         }
