@@ -10,11 +10,17 @@ use Magento\Framework\Indexer\ConfigInterface;
 use Magento\Framework\Indexer\IndexerInterface;
 use Magento\Framework\Indexer\IndexerRegistry;
 use Magento\Framework\Indexer\StateInterface;
+use Magento\Indexer\Model\ResourceModel\Indexer\State as StateResource;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class IndexerReindexCommandPreference extends \Magento\Indexer\Console\Command\IndexerReindexCommand
 {
+    /**
+     * @var StateResource
+     */
+    private $stateResource;
+
     /**
      * @var array
      */
@@ -37,14 +43,17 @@ class IndexerReindexCommandPreference extends \Magento\Indexer\Console\Command\I
 
     /**
      * @param ObjectManagerFactory $objectManagerFactory
+     * @param StateResource $stateResource
      * @param IndexerRegistry|null $indexerRegistry
      * @param DependencyInfoProvider|null $dependencyInfoProvider
      */
     public function __construct(
         ObjectManagerFactory $objectManagerFactory,
+        StateResource $stateResource,
         ?IndexerRegistry $indexerRegistry = null,
-        ?DependencyInfoProvider $dependencyInfoProvider = null,
+        ?DependencyInfoProvider $dependencyInfoProvider = null
     ) {
+        $this->stateResource = $stateResource;
         $this->indexerRegistry = $indexerRegistry;
         $this->dependencyInfoProvider = $dependencyInfoProvider;
         parent::__construct($objectManagerFactory);
@@ -92,8 +101,8 @@ class IndexerReindexCommandPreference extends \Magento\Indexer\Console\Command\I
                         $indexer->getTitle(),
                         $hours,
                         $minutes,
-                        $seconds,
-                    ),
+                        $seconds
+                    )
                 );
                 $returnValue = Cli::RETURN_SUCCESS;
             } catch (LocalizedException $e) {
@@ -135,7 +144,7 @@ class IndexerReindexCommandPreference extends \Magento\Indexer\Console\Command\I
 
         return array_intersect_key(
             $allIndexers,
-            array_flip(array_unique(array_merge(array_keys($indexers), $invalidRelatedIndexers, $dependentIndexers))),
+            array_flip(array_unique(array_merge(array_keys($indexers), $invalidRelatedIndexers, $dependentIndexers)))
         );
     }
 
@@ -152,7 +161,7 @@ class IndexerReindexCommandPreference extends \Magento\Indexer\Console\Command\I
             $relatedIndexerIds = array_merge(
                 $relatedIndexerIds,
                 [$relatedIndexerId],
-                $this->getRelatedIndexerIds($relatedIndexerId),
+                $this->getRelatedIndexerIds($relatedIndexerId)
             );
         }
 
@@ -189,7 +198,7 @@ class IndexerReindexCommandPreference extends \Magento\Indexer\Console\Command\I
     {
         if ($indexer->getStatus() == StateInterface::STATUS_WORKING) {
             throw new LocalizedException(
-                __('%1 index is locked by another reindex process. Skipping.', $indexer->getTitle()),
+                __('%1 index is locked by another reindex process. Skipping.', $indexer->getTitle())
             );
         }
     }
@@ -222,7 +231,7 @@ class IndexerReindexCommandPreference extends \Magento\Indexer\Console\Command\I
     {
         if (empty($sharedIndex)) {
             throw new \InvalidArgumentException(
-                'The sharedIndex is an invalid shared index identifier. Verify the identifier and try again.',
+                'The sharedIndex is an invalid shared index identifier. Verify the identifier and try again.'
             );
         }
         $indexerIds = $this->getIndexerIdsBySharedIndex($sharedIndex);
@@ -234,7 +243,7 @@ class IndexerReindexCommandPreference extends \Magento\Indexer\Console\Command\I
             /** @var \Magento\Indexer\Model\Indexer\State $state */
             $state = $indexer->getState();
             $state->setStatus(StateInterface::STATUS_VALID);
-            $state->save();
+            $this->stateResource->save($state);
         }
         $this->sharedIndexesComplete[] = $sharedIndex;
         return $this;
