@@ -44,6 +44,18 @@ class ViewPlugin
     private $storeConfig;
 
     /**
+     * The view with the status working. The shutdown function sets the status of this view back.
+     *
+     * @var View|null
+     */
+    private $activeView;
+
+    /**
+     * @var bool
+     */
+    private $shutdownRegistered = false;
+
+    /**
      * @param ActionFactory $actionFactory
      * @param array $data
      * @param array $changelogBatchSize
@@ -73,7 +85,16 @@ class ViewPlugin
         pcntl_signal(SIGINT, $this->stop($subject));
         pcntl_signal(SIGQUIT, $this->stop($subject));
         pcntl_signal(SIGHUP, $this->stop($subject));
-        register_shutdown_function($this->stop($subject));
+        if (!$this->shutdownRegistered) {
+            // One function for the life of the process: PHP keeps each registered function, with
+            // the view of the function, until the process ends.
+            register_shutdown_function(function () {
+                if ($this->activeView) {
+                    $this->stop($this->activeView)();
+                }
+            });
+            $this->shutdownRegistered = true;
+        }
 
         try {
             $currentVersionId = $subject->getChangelog()->getVersion();
@@ -98,6 +119,7 @@ class ViewPlugin
                 $currentVersionId
             )
         );
+        $this->activeView = $subject;
         try {
             $subject
                 ->getState()
@@ -126,6 +148,7 @@ class ViewPlugin
                 ->save();
         } finally {
             $this->stop($subject)();
+            $this->activeView = null;
         }
     }
 
