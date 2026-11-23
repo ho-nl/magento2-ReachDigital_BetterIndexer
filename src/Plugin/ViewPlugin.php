@@ -4,6 +4,7 @@ namespace ReachDigital\IndexerPerformance\Plugin;
 
 use Exception;
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\Mview\ActionFactory;
 use Magento\Framework\Mview\ActionInterface;
 use Magento\Framework\Mview\View;
@@ -36,6 +37,11 @@ class ViewPlugin
      */
     private $changelogBatchSize;
 
+    /**
+     * @var DirectoryList
+     */
+    private $directoryList;
+
     private $indexerLog;
     private $indexerTraceLog;
     /**
@@ -44,17 +50,32 @@ class ViewPlugin
     private $storeConfig;
 
     /**
+     * The view with the status working. The shutdown function sets the status of this view back.
+     *
+     * @var View|null
+     */
+    private $activeView;
+
+    /**
+     * @var bool
+     */
+    private $shutdownRegistered = false;
+
+    /**
      * @param ActionFactory $actionFactory
-     * @param array $data
+     * @param ScopeConfigInterface $storeConfig
+     * @param DirectoryList $directoryList
      * @param array $changelogBatchSize
      */
-    public function __construct(ActionFactory $actionFactory, ScopeConfigInterface $storeConfig, array $changelogBatchSize = [])
-    {
+    public function __construct(
+        ActionFactory $actionFactory,
+        ScopeConfigInterface $storeConfig,
+        DirectoryList $directoryList,
+        array $changelogBatchSize = []
+    ) {
         $this->actionFactory = $actionFactory;
         $this->changelogBatchSize = $changelogBatchSize;
-        (new \Magento\Framework\Filesystem\Io\File())->mkdir(BP . '/var/log');
-        $this->indexerLog = (new \Zend_Log())->addWriter(new \Zend_Log_Writer_Stream(BP . '/var/log/indexer.log'));
-        $this->indexerTraceLog = (new \Zend_Log())->addWriter(new \Zend_Log_Writer_Stream(BP . '/var/log/indexer-trace.log'));
+        $this->directoryList = $directoryList;
         $this->storeConfig = $storeConfig;
     }
 
@@ -66,12 +87,23 @@ class ViewPlugin
      */
     public function aroundUpdate(\Magento\Framework\Mview\View $subject, callable $proceed)
     {
+        $this->initializeLoggers();
+
         if ($subject->getState()->getStatus() !== View\StateInterface::STATUS_IDLE) {
             return;
         }
 
         $restoreSignalHandlers = $this->installSignalHandlers($subject);
-        register_shutdown_function($this->stop($subject));
+        if (!$this->shutdownRegistered) {
+            // One function for the life of the process: PHP keeps each registered function, with
+            // the view of the function, until the process ends.
+            register_shutdown_function(function () {
+                if ($this->activeView) {
+                    $this->stop($this->activeView)();
+                }
+            });
+            $this->shutdownRegistered = true;
+        }
 
         try {
             $currentVersionId = $subject->getChangelog()->getVersion();
@@ -97,6 +129,7 @@ class ViewPlugin
                 $currentVersionId
             )
         );
+        $this->activeView = $subject;
         try {
             $subject
                 ->getState()
@@ -126,6 +159,7 @@ class ViewPlugin
         } finally {
             $restoreSignalHandlers();
             $this->stop($subject)();
+            $this->activeView = null;
         }
     }
 
@@ -265,5 +299,19 @@ class ViewPlugin
                 ->setStatus($statusToRestore)
                 ->save();
         };
+    }
+
+    private function initializeLoggers(): void
+    {
+        if ($this->indexerLog !== null) {
+            return;
+        }
+
+        $logDirectory = $this->directoryList->getRoot() . '/var/log';
+        (new \Magento\Framework\Filesystem\Io\File())->mkdir($logDirectory);
+        $this->indexerLog = (new \Zend_Log())->addWriter(new \Zend_Log_Writer_Stream($logDirectory . '/indexer.log'));
+        $this->indexerTraceLog = (new \Zend_Log())->addWriter(
+            new \Zend_Log_Writer_Stream($logDirectory . '/indexer-trace.log')
+        );
     }
 }
